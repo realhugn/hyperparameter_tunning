@@ -1,0 +1,24 @@
+{% extends "_base.html" %}
+
+{% block content %}
+
+<div class="starter-template">
+    <h1>Hyperparameters Tuning</h1>
+    <hr><br>
+    <div>
+        <h3>Tasks {{task_id}}</h3>
+        <pre id="logs_zone">
+        </pre>
+    <br><br>
+</div>
+<script>
+    var ws = new WebSocket("ws://{{host}}:8080/api/v1/ws/task/"+"{{task_id}}");
+    ws.onmessage = function(event) {
+        var messages = document.getElementById('logs_zone')
+        var content = document.createTextNode(event.data)
+        var br = document.createElement("br")
+        messages.appendChild(content)
+        messages.appendChild(br)
+    };
+</script>
+{% endblock %}

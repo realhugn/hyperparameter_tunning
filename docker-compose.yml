@@ -1,0 +1,114 @@
+version: '3.1'
+
+services:
+  db:
+    environment:
+      POSTGRES_USER: "fastapi"
+      POSTGRES_DB: "fastapi"
+      POSTGRES_PASSWORD: "123"
+    image: postgres:alpine
+    ports: 
+      - 5432:5432
+    networks:
+      - mlnet
+
+  redis:
+    image: redis
+    container_name: redis
+    restart: unless-stopped
+    command: redis-server
+    volumes:
+      - redis-data:/data
+    ports:
+     - 6379:6379
+    networks:
+     - mlnet
+
+  rabbitmq:
+    image: rabbitmq:3-management-alpine
+    container_name: 'rabbitmq'
+    ports:
+        - 5672:5672
+        - 15672:15672
+    environment:
+      - RABBITMQ_DEFAULT_USER=user 
+      - RABBITMQ_DEFAULT_PASS=123
+    volumes:
+      - rabbitmq-data:/var/lib/rabbitmq/
+      - rabbitmq-logs:/var/log/rabbitmq
+    networks:
+      - mlnet
+  
+  mnist_ml:
+    container_name: mnist_ml
+    build: ./mnist_ml
+    restart: unless-stopped
+    depends_on:
+      - db
+      - redis
+      - rabbitmq
+    command:  celery -A tasks worker -B --loglevel=info --pool=solo
+    environment:
+      REDIS_HOST: redis
+      REDIS_PORT: ${REDIS_PORT}
+      REDIS_PASS: ${REDIS_PASS}
+      REDIS_DB: ${REDIS_DB}
+      CELERY_QUERY: ${CELERY_QUERY}
+      TASK_NAME: ${TASK_NAME}
+      RABBITMQ_HOST: rabbitmq
+      RABBITMQ_PORT: ${RABBITMQ_PORT}
+      RABBITMQ_PASS: ${RABBITMQ_PASS}
+      RABBITMQ_USER: ${RABBITMQ_USER}
+      RABBITMQ_VHOST: ${RABBITMQ_VHOST}
+      PQ_DRIVER: ${PQ_DRIVER}
+      DB_USERNAME: ${DB_USERNAME}
+      DB_HOST: db
+      DB_PASSWORD: ${DB_PASSWORD}
+      DB_NAME: ${DB_NAME}
+    volumes:
+      - celery-logs:/logs/
+    networks:
+      - mlnet
+  ml-api:
+    image: api
+    build: ./api
+    restart: unless-stopped
+    depends_on:
+      - db
+      - redis
+      - rabbitmq
+    environment:
+      REDIS_HOST: redis
+      REDIS_PORT: ${REDIS_PORT}
+      REDIS_PASS: ${REDIS_PASS}
+      REDIS_DB: ${REDIS_DB}
+      CELERY_QUERY: ${CELERY_QUERY}
+      TASK_NAME: ${TASK_NAME}
+      RABBITMQ_HOST: rabbitmq
+      RABBITMQ_PORT: ${RABBITMQ_PORT}
+      RABBITMQ_PASS: ${RABBITMQ_PASS}
+      RABBITMQ_USER: ${RABBITMQ_USER}
+      RABBITMQ_VHOST: ${RABBITMQ_VHOST}
+      PQ_DRIVER: ${PQ_DRIVER}
+      DB_USERNAME: ${DB_USERNAME}
+      DB_HOST: db
+      DB_PASSWORD: ${DB_PASSWORD}
+      DB_NAME: ${DB_NAME}
+      DB_PORT: ${DB_PORT}
+      HOST: ${HOST}
+    volumes:
+      - api-logs:/logs/
+    ports:
+      - 8080:8080
+    networks:
+      - mlnet
+
+networks:
+  mlnet:
+
+volumes:
+  redis-data:
+  rabbitmq-data:
+  rabbitmq-logs:
+  api-logs:
+  celery-logs:

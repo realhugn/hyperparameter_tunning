@@ -1,0 +1,101 @@
+{% extends "_base.html" %}
+
+{% block content %}
+
+<div class="starter-template">
+  <h1>Hyperparameters Tuning</h1>
+  <hr><br>
+  <div>
+    <h3>Tasks</h3>
+    <p>Choose Hyperparameter.</p>
+    <form id="myForm">
+      <div class="mb-3">
+        <label class="form-label">Learning Rate</label>
+        <input type="number" class="form-control" required placeholder="0.003" name="lr" step="0.00000001">
+      </div>
+      <div class="mb-3">
+        <label class="form-label">Momentum</label>
+        <input type="number" class="form-control" required placeholder="0.9" name="momentum" step="0.001">
+      </div>
+      <div class="mb-3">
+        <label class="form-label">Epochs</label>
+        <input type="number" class="form-control" required placeholder="10" name="epochs">
+      </div>
+      <div class="mb-3">
+        <label class="form-label">Batch size</label>
+        <input type="number" class="form-control" required placeholder="32" name="batch_size">
+      </div>
+      <button type="button" class="btn btn-primary" id="submit">Submit</button>
+    </form>
+  </div>
+
+  <br><br>
+  <div>
+    <h3>Task Status</h3>
+    <br>
+    <table id="dtBasicExample" class="table table-striped" cellspacing="0" width="100%">
+      <thead>
+        <tr>
+          <th class="th-sm">Task ID
+          </th>
+          <th class="th-sm">Learning Rate
+          </th>
+          <th class="th-sm">Momentum
+          </th>
+          <th class="th-sm">Epochs
+          </th>
+          <th class="th-sm">Batch Size
+          </th>
+          <th class="th-sm">Accuracy
+          </th>
+          <th class="th-sm">F1 Score
+          </th>
+          <th class="th-sm">Time Train & Eval
+          </th>
+          <th class="th-sm">Status
+          </th>
+        </tr>
+      </thead>
+    </table>
+  </div>
+</div>
+<script>
+  document.getElementById('submit').addEventListener('click', function() {
+    var formData = new FormData(document.getElementById('myForm'));
+    var object = {};
+    formData.forEach(function(value, key){
+      object[key] = value;
+    });
+    var json = JSON.stringify(object);
+    fetch('/api/v1/train', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: json
+    })
+    .then(response => {
+      if( response.ok){
+        return response.json()
+      }
+      else {
+        let err = new Error()
+        response.json().then((errorJson) => {
+          alert(errorJson.detail); 
+         }); 
+         throw err
+      }
+    })
+    .then(data => {
+      document.getElementById('myForm').reset()
+      getStatus(data.task_id)
+    })
+    .catch(error => {
+      console.log(error)
+    });
+  });
+
+
+</script>
+
+{% endblock %}

@@ -1,0 +1,12 @@
+celery==5.3.6
+fastapi==0.110.0
+kombu==5.3.5
+pydantic==1.10.14
+pytz==2023.3.post1
+redis==5.0.2
+SQLAlchemy==1.4.39
+psycopg2-binary
+python-dotenv
+uvicorn==0.27.1
+jinja2
+websockets
